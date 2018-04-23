@@ -44,8 +44,8 @@ program fits_coaddspectra_e2ds
   real (kind=8) :: wl_min, wl_max , mjd_mean
 
 
-  integer :: n_com, date_opt
-  character (len = nch_file) :: arch_red, opt_in
+  integer :: n_com, date_arc_opt, date_cal_opt
+  character (len = nch_file) :: archive_dir, calib_dir, opt_in
 
   call get_lun(lun_input)
   call get_lun(lun_out1)
@@ -55,15 +55,18 @@ program fits_coaddspectra_e2ds
   n_com = iargc()
 
   if (n_com.lt.4) then
-     write(*,*) 'Input 1: input file list'
-     write(*,*) 'Input 2: ouput rad name'
-     write(*,*) 'Input 3: rebinning step'
-     write(*,*) 'Input 4: 1: extensive output files'
-     write(*,*) 'Input 5: (optional) 1: RV in input file list as 6th argument'
-     write(*,*) 'Input 6: (optional): Archive directory '
-     write(*,*) 'Input 7: (optional): 0 = do not use date as prefix '
-     write(*,*) '  '
-     write(*,*) 'Input 7 to be used if all the files are in the same directory (as Yabi reprocessed files are) '
+    write(*,*) 'Input 1: input file list'
+    write(*,*) 'Input 2: ouput rad name'
+    write(*,*) 'Input 3: rebinning step'
+    write(*,*) 'Input 4: 1: extensive output files'
+    write(*,*) 'Input 5: (optional) 1: RV in input file list as 6th argument'
+    write(*,*) 'Input 6: (optional) Calibration directory (blaze, etc)'
+    write(*,*) 'Input 7: (optional) 0 = do not use date as prefix for calibration (default is 1)'
+    write(*,*) 'Input 8: (optional) Archive directory (e2ds, ccf, etc) (default is Input 6)'
+    write(*,*) 'Input 9: (optional) 0 = do not use date as prefix for Archive directory (default is Input 7)'
+    write(*,*) '  '
+    write(*,*) 'Input 7 and 8 to be used if all the files are in the same directory (as Yabi reprocessed files are) '
+    write(*,*) 'If Input 6 and 7 are specified, but 8 and 9 are not, then the same of 6 and 7 will be applied '
      !!write(*,*) 'Input 8 (optional): ESO flag (1 for HARPS) '
      stop
   end if
@@ -76,19 +79,31 @@ program fits_coaddspectra_e2ds
   read(opt_in,*) opt_output
 
   rv_from_list = 0
-  arch_red = archive_red
-  date_opt = 1
+  archive_dir = archive_red
+  calib_dir = archive_red
+  date_arc_opt = 1
+  date_cal_opt = 1
 
   if (n_com.ge.5) then
     call getarg(5,opt_in); read (opt_in,*) rv_from_list
   end if
 
   if (n_com.ge.6) then
-    call getarg(6,arch_red)
+    call getarg(6,calib_dir)
+    archive_dir = calib_dir
   end if
 
   if (n_com.ge.7) then
-     call getarg(7,opt_in); read (opt_in,*) date_opt
+     call getarg(7,opt_in); read (opt_in,*) date_cal_opt
+     date_arc_opt = date_cal_opt
+  end if
+
+  if (n_com.ge.8) then
+    call getarg(8,archive_dir)
+  end if
+
+  if (n_com.ge.9) then
+     call getarg(9,opt_in); read (opt_in,*) date_arc_opt
   end if
 
 
@@ -136,10 +151,10 @@ program fits_coaddspectra_e2ds
      n = n + 1
      write(*,*)
 
-     if (date_opt.eq.1) then
-        file_s2d_name = trim(arch_red)//trim(file_date)//'/'//trim(file_rad)//'_e2ds_'//fiber_sel//'.fits'
+     if (date_arc_opt.eq.1) then
+        file_s2d_name = trim(archive_dir)//trim(file_date)//'/'//trim(file_rad)//'_e2ds_'//fiber_sel//'.fits'
      else
-        file_s2d_name = trim(arch_red)//'/'//trim(file_rad)//'_e2ds_'//fiber_sel//'.fits'
+        file_s2d_name = trim(archive_dir)//'/'//trim(file_rad)//'_e2ds_'//fiber_sel//'.fits'
      end if
 
      call fits_check(file_s2d_name,sts_out)
@@ -166,10 +181,10 @@ program fits_coaddspectra_e2ds
      !! s_pix = s_pix*ccd_gain
 
      !! CCF file is udes to read additional informations of spectra
-     if (date_opt.eq.1) then
-        file_s1d_name = trim(arch_red)//trim(file_date)//'/'//trim(file_rad)//'_ccf_'//mask_sel//'_'//fiber_sel//'.fits'
+     if (date_arc_opt.eq.1) then
+        file_s1d_name = trim(archive_dir)//trim(file_date)//'/'//trim(file_rad)//'_ccf_'//mask_sel//'_'//fiber_sel//'.fits'
      else
-        file_s1d_name = trim(arch_red)//'/'//trim(file_rad)//'_ccf_'//mask_sel//'_'//fiber_sel//'.fits'
+        file_s1d_name = trim(archive_dir)//'/'//trim(file_rad)//'_ccf_'//mask_sel//'_'//fiber_sel//'.fits'
      end if
 
      call fits_check(file_s1d_name,sts_out)
@@ -181,10 +196,10 @@ program fits_coaddspectra_e2ds
      call fits_header_getinfo(lun_fits)
      call fits_close(lun_fits)
 
-     if (date_opt.eq.1) then
-        file_s2d_name = trim(arch_red)//trim(file_date)//'/'//trim(file_blaze)
+     if (date_cal_opt.eq.1) then
+        file_s2d_name = trim(calib_dir)//trim(file_date)//'/'//trim(file_blaze)
      else
-        file_s2d_name = trim(arch_red)//'/'//trim(file_blaze)
+        file_s2d_name = trim(calib_dir)//'/'//trim(file_blaze)
      end if
 
      call fits_check(file_s2d_name,sts_out)
