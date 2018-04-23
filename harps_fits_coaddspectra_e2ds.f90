@@ -10,7 +10,7 @@ program fits_coaddspectra_e2ds
 
   integer :: i, j, n,ij, ii, j_is, j_ie
   integer :: lun_input, lun_fits, lun_out1, lun_out2
-  integer :: opt_output
+  integer :: opt_output, rv_from_list
 
   character (len = nch_file) :: file_input, file_date, file_rad, file_s1d_name, file_s2d_name, file_blaze, &
        file_s1d_output, star_name, file_output
@@ -32,7 +32,7 @@ program fits_coaddspectra_e2ds
   real (kind=8), allocatable, dimension (:)  :: r_rb_pix, j_rb_pix, dw_rb_pix,d1_rb_pix
   real (kind=8), allocatable, dimension(:,:) :: s_rb_pix, b_rb_pix
 
-  real (kind=8), allocatable, dimension(:) ::  sum_rb_pix, snr_rb_pix
+  real (kind=8), allocatable, dimension(:) ::  sum_rb_pix, snr_rb_pix, err_rb_pix
   integer :: n_rebin
 
 
@@ -59,9 +59,11 @@ program fits_coaddspectra_e2ds
      write(*,*) 'Input 2: ouput rad name'
      write(*,*) 'Input 3: rebinning step'
      write(*,*) 'Input 4: 1: extensive output files'
-     write(*,*) 'Input 5 (optional): Archive directory '
-     write(*,*) 'Input 6 (optional): 0 = do not use date as prefix '
-     write(*,*) 'Input 6: to be used if all the files are in the same directory (as Yabi reprocessed files are) '
+     write(*,*) 'Input 5: (optional) 1: RV in input file list as 6th argument'
+     write(*,*) 'Input 6: (optional): Archive directory '
+     write(*,*) 'Input 7: (optional): 0 = do not use date as prefix '
+     write(*,*) '  '
+     write(*,*) 'Input 7 to be used if all the files are in the same directory (as Yabi reprocessed files are) '
      !!write(*,*) 'Input 8 (optional): ESO flag (1 for HARPS) '
      stop
   end if
@@ -73,13 +75,21 @@ program fits_coaddspectra_e2ds
   call getarg(4,opt_in)
   read(opt_in,*) opt_output
 
+  rv_from_list = 0
   arch_red = archive_red
   date_opt = 1
-  if (n_com.eq.6) then
-     call getarg(5,arch_red)
-     call getarg(6,opt_in); read (opt_in,*) date_opt
+
+  if (n_com.ge.5) then
+    call getarg(5,opt_in); read (opt_in,*) rv_from_list
   end if
 
+  if (n_com.ge.6) then
+    call getarg(6,arch_red)
+  end if
+
+  if (n_com.ge.7) then
+     call getarg(7,opt_in); read (opt_in,*) date_opt
+  end if
 
 
   open(lun_input,file=trim(file_input), status='old')
@@ -91,8 +101,9 @@ program fits_coaddspectra_e2ds
 
 
   !! Allocating array for e2ds
-  allocate(r_rb_pix(n_rebin), j_rb_pix(n_rebin), snr_rb_pix(n_rebin), dw_rb_pix(n_rebin), sum_rb_pix(n_rebin))
-  allocate(d1_rb_pix(n_rebin))
+  allocate(r_rb_pix(n_rebin), j_rb_pix(n_rebin), dw_rb_pix(n_rebin))
+  allocate(snr_rb_pix(n_rebin), sum_rb_pix(n_rebin))
+  allocate(d1_rb_pix(n_rebin),err_rb_pix(n_rebin))
 
   do i=1,n_rebin
      r_rb_pix(i) = wl_start + (i-1)*rb_bin
@@ -105,6 +116,7 @@ program fits_coaddspectra_e2ds
 
   sum_rb_pix = 0._PR
   snr_rb_pix = 0._PR
+  err_rb_pix = 0._PR
 
   if (opt_output.gt.0) then
      file_s1d_output =  trim(file_output) //'_s1d_all.dat'
@@ -114,7 +126,12 @@ program fits_coaddspectra_e2ds
   end if
 
   do while (read_iostat.eq.0)
-     read(lun_input,*,iostat=read_iostat) file_date, file_rad, mask_sel, fiber_sel, star_name
+     if (rv_from_list.eq.1) then
+       read(lun_input,*,iostat=read_iostat) file_date, file_rad, mask_sel, fiber_sel, star_name, rv_fin
+     else
+       read(lun_input,*,iostat=read_iostat) file_date, file_rad, mask_sel, fiber_sel, star_name
+     endif
+
      if (read_iostat.ne.0) exit
      n = n + 1
      write(*,*)
@@ -159,7 +176,7 @@ program fits_coaddspectra_e2ds
      write(*,*) n, trim(file_date),'   ', trim(file_rad),'   ', trim(file_s1d_name), '   FOUND= ',sts_out,'(1=true)'
 
      call fits_actv(lun_fits,file_s1d_name)
-     call singleheader_RVC(lun_fits,rv_fin,sts)
+     if (rv_from_list.eq.0) call singleheader_RVC(lun_fits,rv_fin,sts)
      call singleheader_BERV(lun_fits,berv,sts)
      call fits_header_getinfo(lun_fits)
      call fits_close(lun_fits)
@@ -263,6 +280,9 @@ program fits_coaddspectra_e2ds
      close(lun_out2)
   end if
 
+  snr_rb_pix = sqrt(snr_rb_pix)
+  err_rb_pix = sum_rb_pix / sqrt(snr_rb_pix)
+
   !!! first derivative
   d1_rb_pix = 0.00000000d0
   d1_rb_pix(2:n_rebin-1) = (sum_rb_pix(3:n_rebin)-sum_rb_pix(1:n_rebin-2))/(r_rb_pix(3:n_rebin)-r_rb_pix(1:n_rebin-2))
@@ -271,8 +291,10 @@ program fits_coaddspectra_e2ds
 
   file_s1d_output = trim(file_output) //'_coadd.dat'
   open(lun_out1,file=file_s1d_output,status='new')
+  write(lun_out1,'(A60)') '# wavelength, flux, err, wave_step, snr, flix_derivative, pixel_fraction'
   do i = 1,n_rebin
-     write(lun_out1,'(I9,F11.4,5E15.7)') i, r_rb_pix(i), sum_rb_pix(i), dw_rb_pix(i), snr_rb_pix(i), d1_rb_pix(i), j_rb_pix(i)
+    write(lun_out1,'(F11.4,6E15.7,I9)') r_rb_pix(i), sum_rb_pix(i), err_rb_pix(i), dw_rb_pix(i), &
+    snr_rb_pix(i), d1_rb_pix(i), j_rb_pix(i), i
   end do
   close(lun_out1)
 
@@ -300,9 +322,15 @@ program fits_coaddspectra_e2ds
   call fits_close(lun_out1)
 
 
+  file_s1d_output = trim(file_output) //'_err.fits'
+  call fits_write_1d(lun_out1,file_s1d_output,err_rb_pix)
+  call scale_to_wcs(lun_out1,1,ctype=ctype,crval=crval,crpix=crpix,cdelt=cdelt,bunit=bunit)
+  call fits_header_putinfo(lun_out1)
+  call fits_close(lun_out1)
+
 
   !! dellocating array for e2ds
-  deallocate(r_rb_pix, j_rb_pix, snr_rb_pix, dw_rb_pix, sum_rb_pix)
+  deallocate(r_rb_pix, j_rb_pix, snr_rb_pix, dw_rb_pix, sum_rb_pix, err_rb_pix)
   deallocate(d1_rb_pix)
 
   write(*,*) 'PROGRAM HAS ENDED'

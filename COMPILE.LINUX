@@ -5,7 +5,7 @@ cd routines
 rm *.o *.mod
 #modules are compiled apart
 gfortran -O2 -funroll-loops  -c ./common.f90
-gfortran -O2 -funroll-loops  -c ./filepaths_mac.f90
+gfortran -O2 -funroll-loops  -c ./filepaths_goblin.f90
 gfortran -O2 -funroll-loops  -c ./maths.f90
 gfortran -O2 -funroll-loops  -c ./random.f90
 gfortran -O2 -funroll-loops  -c ./fits.f90
