@@ -11,14 +11,15 @@ gfortran -O2 -funroll-loops  -c ./random.f90
 gfortran -O2 -funroll-loops  -c ./fits.f90
 gfortran -O2 -funroll-loops  -c ./instrument_harps.f90
 gfortran -O2 -funroll-loops  -c ./instrument_harpn.f90
-gfortran -O2 -funroll-loops  -c ./smooth.f90
+#gfortran -O2 -funroll-loops  -c ./smooth.f90
 gfortran -O2 -funroll-loops  -c ./spectrum_rebin.f90
-gfortran -O2 -funroll-loops  -c ./linelist_libraries.f90
-gfortran -O2 -funroll-loops  -c ./spectrum_libraries.f90
-gfortran -O2 -funroll-loops  -c ./spectrum_smooth.f90
+#gfortran -O2 -funroll-loops  -c ./linelist_libraries.f90
+#gfortran -O2 -funroll-loops  -c ./spectrum_libraries.f90
+#gfortran -O2 -funroll-loops  -c ./spectrum_smooth.f90
 
 cd ..
-gfortran -O2 -funroll-loops  -fopenmp ./routines/*.o -J ./routines/ harpn_fits_coaddspectra_e2ds.f90 -o ../bin/harpn_fits_coaddspectra_e2ds.e -L/usr/local/lib/ -L../others/cfitsio/lib -lcurl -lcfitsio -lm
-gfortran -O2 -funroll-loops  -fopenmp ./routines/*.o -J ./routines/ harps_fits_coaddspectra_e2ds.f90 -o ../bin/harps_fits_coaddspectra_e2ds.e -L/usr/local/lib/ -L../others/cfitsio/lib -lcurl -lcfitsio -lm
-gfortran -O2 -funroll-loops  -fopenmp ./routines/*.o -J ./routines/ harpn_db_extract_keyword.f90 -o ../bin/harpn_db_extract_keyword.e -L/usr/local/lib/ -L../others/cfitsio/lib -lcurl -lcfitsio -lm
-gfortran -O2 -funroll-loops  -fopenmp ./routines/*.o -J ./routines/ harps_db_extract_keyword.f90 -o ../bin/harps_db_extract_keyword.e -L/usr/local/lib/ -L../others/cfitsio/lib -lcurl -lcfitsio -lm
+gfortran -O2 -funroll-loops  -fopenmp ./routines/*.o -J ./routines/ harpn_fits_coaddspectra_e2ds.f90 -o ../bin/harpn_fits_coaddspectra_e2ds.e -L/usr/local/lib/ -lcfitsio -lm
+#gfortran -O2 -funroll-loops  -fopenmp ./routines/*.o -J ./routines/ harpn_fits_coaddspectra_e2ds.f90 -o ../bin/harpn_fits_coaddspectra_e2ds.e -L/usr/local/lib/ -L../others/cfitsio/lib -lcurl -lcfitsio -lm
+#gfortran -O2 -funroll-loops  -fopenmp ./routines/*.o -J ./routines/ harps_fits_coaddspectra_e2ds.f90 -o ../bin/harps_fits_coaddspectra_e2ds.e -L/usr/local/lib/ -L../others/cfitsio/lib -lcurl -lcfitsio -lm
+#gfortran -O2 -funroll-loops  -fopenmp ./routines/*.o -J ./routines/ harpn_db_extract_keyword.f90 -o ../bin/harpn_db_extract_keyword.e -L/usr/local/lib/ -L../others/cfitsio/lib -lcurl -lcfitsio -lm
+#gfortran -O2 -funroll-loops  -fopenmp ./routines/*.o -J ./routines/ harps_db_extract_keyword.f90 -o ../bin/harps_db_extract_keyword.e -L/usr/local/lib/ -L../others/cfitsio/lib -lcurl -lcfitsio -lm
