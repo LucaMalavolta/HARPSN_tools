@@ -375,7 +375,7 @@ contains
     
     real (kind=8), dimension(:), intent(out) :: dpix
 
-    integer :: rwmod, blksz, sts,  maxdim, naxis, naxes, bitpix, verb
+    integer :: rwmod, blksz, sts,  maxdim, naxis, naxes(2), bitpix, verb
     character (len = 30) :: errtext
     logical :: anyf
 
@@ -398,7 +398,7 @@ contains
        write (verb,'(1X, A18, I9)') '     points:      ', naxes
     end if
 
-    if (size(dpix,1).ne.naxes) stop
+    if (size(dpix,1).ne.naxes(1)) stop
 
     !    extracts the image array from fits and puts it in 'pix'
     call FTGPVD(unit,0,1,naxes,nullval_d,dpix,anyf,sts) ;  call reset_sts(sts,1,verb)
@@ -465,7 +465,7 @@ contains
     character (len=nch_file), intent(in) :: filename
     integer, intent(in), optional :: verbose
 
-    integer :: sts, naxes, verb
+    integer :: sts, naxes(2), verb
     character (len= 20) :: hdutype
 
     sts = 0
