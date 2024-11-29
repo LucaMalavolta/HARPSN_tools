@@ -72,7 +72,7 @@ Examples:
 If all the files are in the same folders and you wasnt to save the output in the same folder, just run:
 
 ```bash
-/home/malavolta/CODE/HARPSN_tools/harps_fits_coaddspectra_e2ds.e TOI000_input.list coadd/TOI0000_coadd 0.02  1 0  . 0  .0 
+/home/malavolta/CODE/HARPSN_tools/harps_fits_coaddspectra_e2ds.e TOI000_input.list coadd/TOI0000_coadd 0.02  1 0  . 0  . 0 
 ```
 
 You can specify the relative path of your data:
@@ -81,4 +81,8 @@ You can specify the relative path of your data:
 /home/malavolta/CODE/HARPSN_tools/harps_fits_coaddspectra_e2ds.e TOI5795_input.list coadd/TOI0000_coadd 0.02  1 0  ~/data/COADD/spectra  0  ~/data/COADD/spectra  0
 ```
 
-If the observatuibs are 
+If the observations are divided according to the night of observations, as it usually happens when you download the data from the ESO archive, the last command will change in this way:
+
+```bash
+/home/malavolta/CODE/HARPSN_tools/harps_fits_coaddspectra_e2ds.e TOI5795_input.list coadd/TOI0000_coadd 0.02  1 0  ~/data/COADD/spectra  1  ~/data/COADD/spectra  1
+```
